@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gem Clicker Simulator 3D</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body, html {
+            margin: 0; padding: 0;
+            overflow: hidden;
+            width: 100%; height: 100%;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            background: radial-gradient(circle, #110022 0%, #030008 100%);
+            color: white;
+        }
+        #canvas-container {
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; z-index: 1;
+        }
+        #ui-layer {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            padding: 20px;
+            gap: 20px;
+        }
+        .interactive { pointer-events: auto; }
+
+        /* Paneles Estilo Roblox (Colores brillantes, bordes gruesos) */
+        .roblox-panel {
+            background: rgba(20, 10, 35, 0.85);
+            border: 4px solid #3a0066;
+            border-radius: 20px;
+            padding: 15px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 0 #200040, 0 0 20px rgba(0,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            text-align: center;
+            font-size: 1.4rem;
+            color: #ffff00;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 0 #000;
+            -webkit-text-stroke: 1px #3a0066;
+        }
+
+        /* Marcador Central */
+        #center-hud {
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            text-align: center;
+        }
+        .stat-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 30px;
+            border-radius: 50px;
+            border: 3px solid #00ffff;
+            box-shadow: 0 4px 0 #00aaaa;
+        }
+        #score-display { font-size: 3rem; color: #00ffff; margin: 0; text-shadow: 3px 3px 0 #000; }
+        #rebirth-display { font-size: 1.5rem; color: #ff00ff; margin: 0; text-shadow: 2px 2px 0 #000; }
+
+        /* Botones e Ítems */
+        .roblox-btn {
+            background: linear-gradient(180deg, #00ff00 0%, #00aa00 100%);
+            border: none;
+            border-bottom: 5px solid #006600;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 1.1rem;
+            padding: 10px;
+            cursor: pointer;
+            text-shadow: 1px 1px 0 #000;
+            transition: transform 0.1s;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .roblox-btn:active {
+            transform: translateY(4px);
+            border-bottom-width: 1px;
+        }
+        .roblox-btn.purple {
+            background: linear-gradient(180deg, #ff00ff 0%, #aa00aa 100%);
+            border-bottom-color: #660066;
+        }
+
+        /* Items de Tienda y Mascotas */
+        .card-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .card-item:hover { background: rgba(255,255,255,0.15); }
+        .info-side { display: flex; flex-direction: column; gap: 4px; }
+        .name-lbl { font-size: 1rem; color: #fff; }
+        .cost-lbl { font-size: 0.85rem; color: #ffaa00; }
+        .count-lbl { font-size: 1.2rem; color: #00ffff; }
+
+        /* Gacha Egg Section */
+        .egg-box {
+            border: 3px dashed #ffff00;
+            border-radius: 15px;
+            padding: 10px;
+            text-align: center;
+            margin-top: 10px;
+            background: rgba(255,255,0,0.05);
+        }
+
+        /* Texto Flotante */
+        .floating-text {
+            position: absolute;
+            font-weight: bold; font-size: 2rem;
+            pointer-events: none;
+            animation: floatUp 0.6s ease-out forwards;
+            z-index: 20;
+            text-shadow: 2px 2px 0 #000;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-120px) scale(0.8); opacity: 0; }
+        }
+
+        /* Scrollbar Tuneado */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #3a0066; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="roblox-panel interactive" id="left-panel">
+            <div class="panel-title">🐾 MASCOTAS (PETS)</div>
+            
+            <div class="egg-box">
+                <div style="color: #ffff00; margin-bottom: 5px; font-size: 0.9rem;">🥚 HUEVO MÍSTICO</div>
+                <button class="roblox-btn" onclick="buyEgg()">Abrir (100 💎)</button>
+                <div style="font-size: 0.75rem; color: #a0a0c0;">Probabilidades:<br>🐶 Perro (60%) | 🐱 Gato (35%) | 🐉 Dragón (5%)</div>
+            </div>
+
+            <div style="margin-top: 15px; font-size: 1rem; border-top: 2px solid #3a0066; padding-top: 10px; text-align:center;">
+                Multiplicador de Pets: <span id="pet-mult-lbl" style="color: #00ff00;">x1.0</span>
+            </div>
+            <div id="pets-list" style="margin-top: 10px;">
+                </div>
+        </div>
+
+        <div id="center-hud">
+            <div class="stat-box">
+                <h1 id="score-display">0</h1>
+                <div style="font-size: 0.9rem; color: #a0a0c0; font-family: sans-serif;" id="cps-display">CPS: 0</div>
+            </div>
+            <div class="stat-box" style="border-color: #ff00ff; box-shadow: 0 4px 0 #aa00aa; padding: 5px 20px;">
+                <h2 id="rebirth-display">Rebirths: 0 (x1)</h2>
+            </div>
+        </div>
+
+        <div class="roblox-panel interactive" id="right-panel">
+            <div class="panel-title">⚡ RENACIMIENTO</div>
+            <button class="roblox-btn purple" id="rebirth-btn" onclick="triggerRebirth()">¡REBIRTH!<br><span id="rebirth-cost-lbl" style="font-size:0.8rem; color:#ffff00;">Costo: 1,000 💎</span></button>
+            <div style="font-size: 0.75rem; color: #ffaa00; text-align: center; margin-bottom: 15px;">Te da +100% de ganancias globales permanentes pero resetea tus gemas.</div>
+
+            <div class="panel-title" style="border-top: 2px solid #3a0066; padding-top: 15px;">🛒 MEJORAS</div>
+            
+            <div class="card-item" onclick="buyUpgrade('click')">
+                <div class="info-side">
+                    <span class="name-lbl">Super Click</span>
+                    <span class="cost-lbl" id="cost-click">Costo: 15</span>
+                </div>
+                <span class="count-lbl" id="count-click">0</span>
+            </div>
+
+            <div class="card-item" onclick="buyUpgrade('miner')">
+                <div class="info-side">
+                    <span class="name-lbl">Minero Espectral</span>
+                    <span class="cost-lbl" id="cost-miner">Costo: 100</span>
+                </div>
+                <span class="count-lbl" id="count-miner">0</span>
+            </div>
+
+            <div class="card-item" onclick="buyUpgrade('altar')">
+                <div class="info-side">
+                    <span class="name-lbl">Altar Cristalino</span>
+                    <span class="cost-lbl" id="cost-altar">Costo: 750</span>
+                </div>
+                <span class="count-lbl" id="count-altar">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- VARIABLES DEL JUEGO MÁSTER ---
+        let score = 0;
+        let rebirths = 0;
+        let baseClickPower = 1;
+        let baseCps = 0;
+
+        const upgrades = {
+            click: { count: 0, cost: 15, baseCost: 15, benefit: 1 },
+            miner: { count: 0, cost: 100, baseCost: 100, benefit: 1 },
+            altar: { count: 0, cost: 750, baseCost: 750, benefit: 8 }
+        };
+
+        const petsInventory = {
+            perro: { name: "🐶 Perro Valiente", count: 0, mult: 100 },
+            gato: { name: "🐱 Gato Cósmico", count: 0, mult: 150 },
+            dragon: { name: "🐉 Dragón Mítico", count: 0, mult: 500 }
+        };
+
+        // --- SISTEMA MATEMÁTICO DE MULTIPLICADORES ---
+        function getRebirthMultiplier() {
+            return 1 + rebirths; // Cada rebirth suma +100% de multiplicador (Rebirth 0 = x1, Rebirth 1 = x2, etc.)
+        }
+
+        function getPetMultiplier() {
+            let totalPetBonus = 0;
+            totalPetBonus += petsInventory.perro.count * petsInventory.perro.mult;
+            totalPetBonus += petsInventory.gato.count * petsInventory.gato.mult;
+            totalPetBonus += petsInventory.dragon.count * petsInventory.dragon.mult;
+            return 1 + totalPetBonus;
+        }
+
+        function getTotalMultiplier() {
+            return getRebirthMultiplier() * getPetMultiplier();
+        }
+
+        function getClickPower() {
+            return (baseClickPower + (upgrades.click.count * upgrades.click.benefit * 382193)) * getTotalMultiplier();
+        }
+
+        function getRebirthCost() {
+            return Math.round(1000 * Math.pow(2.5, rebirths));
+        }
+
+        // --- CONFIGURACIÓN THREE.JS ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Iluminación Neon Robloxera
+        const ambientLight = new THREE.AmbientLight(0x5533aa, 1.8);
+        scene.add(ambientLight);
+
+        const light1 = new THREE.PointLight(0x00ffff, 2.5, 50);
+        light1.position.set(6, 6, 4);
+        scene.add(light1);
+
+        const light2 = new THREE.PointLight(0xff00ff, 2.5, 50);
+        light2.position.set(-6, -6, 4);
+        scene.add(light2);
+
+        // Gema 3D Megasofisticada (Icosaedro estilizado de 20 caras)
+        const geometry = new THREE.IcosahedronGeometry(1.4, 0);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x00ffff,
+            roughness: 0.05,
+            metalness: 0.9,
+            flatShading: true,
+            emissive: 0x112244
+        });
+        const gem = new THREE.Mesh(geometry, material);
+        scene.add(gem);
+
+        // Partículas Estelares
+        const particlesGeo = new THREE.BufferGeometry();
+        const pCount = 100;
+        const positions = new Float32Array(pCount * 3);
+        for(let i=0; i<pCount*3; i++) positions[i] = (Math.random() - 0.5) * 12;
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.08, color: "#ff00ff", transparent: true, opacity: 0.7 });
+        const particleSystem = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particleSystem);
+
+        // Mecánica de Raycast (Clicks)
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let targetScale = 1;
+
+        // --- BUCLE DE ANIMACIÓN ---
+        function animate() {
+            requestAnimationFrame(animate);
+            gem.rotation.y += 0.015;
+            gem.rotation.x += 0.005;
+            particleSystem.rotation.y -= 0.009;
+
+            // Interpolación elástica de escala
+            gem.scale.x += (targetScale - gem.scale.x) * 0.25;
+            gem.scale.y += (targetScale - gem.scale.y) * 0.25;
+            gem.scale.z += (targetScale - gem.scale.z) * 0.25;
+
+            if (Math.abs(gem.scale.x - targetScale) < 0.01 && targetScale !== 1) {
+                targetScale = 1;
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- INPUTS Y ACCIÓN ---
+        window.addEventListener('mousedown', (e) => triggerClick(e.clientX, e.clientY, e.target));
+        window.addEventListener('touchstart', (e) => {
+            if(e.touches.length > 0) triggerClick(e.touches[0].clientX, e.touches[0].clientY, e.target);
+        });
+
+        function triggerClick(x, y, target) {
+            if (target.closest('.interactive')) return; // Bloquear si da click a menús
+
+            mouse.x = (x / window.innerWidth) * 2 - 1;
+            mouse.y = -(y / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects([gem]);
+
+            if (hits.length > 0) {
+                let gain = getClickPower();
+                score += gain;
+                
+                // Feedback estético 3D
+                gem.material.emissive.setHex(0xffffff);
+                setTimeout(() => gem.material.emissive.setHex(0x112244), 60);
+                gem.scale.set(0.6, 0.6, 0.6);
+                targetScale = 1.3;
+
+                createFloatingText(x, y, `+${Math.floor(gain)} 💎`, '#00ffff');
+                updateUI();
+            }
+        }
+
+        function createFloatingText(x, y, text, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.style.left = `${x - 20}px`; el.style.top = `${y - 30}px`;
+            el.innerText = text;
+            el.style.color = color || '#ffffff';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 600);
+        }
+
+        // --- SISTEMA DE TIENDA ---
+        function buyUpgrade(type) {
+            const up = upgrades[type];
+            if (score >= up.cost) {
+                score -= up.cost;
+                up.count++;
+                up.cost = Math.round(up.baseCost * Math.pow(1.18, up.count));
+                recalculateCps();
+                updateUI();
+            }
+        }
+
+        function recalculateCps() {
+            baseCps = (upgrades.miner.count * upgrades.miner.benefit) + 
+                      (upgrades.altar.count * upgrades.altar.benefit);
+        }
+
+        // --- SISTEMA DE GACHA HUEVOS (PETS) ---
+        function buyEgg() {
+            const eggCost = 0;
+            if (score >= eggCost) {
+                score -= eggCost;
+                
+                // Probabilidades estilo Roblox
+                let rand = Math.random() * 100;
+                let petAwarded = "";
+
+                if (rand < 60) petAwarded = "perro";
+                else if (rand < 95) petAwarded = "gato";
+                else petAwarded = "dragon";
+
+                petsInventory[petAwarded].count++;
+                
+                // Cambiar el color de la gema dinámicamente según la rareza obtenida
+                let flashColor = petAwarded === 'dragon' ? 0xffaa00 : (petAwarded === 'gato' ? 0xff00ff : 0x00ff00);
+                gem.material.color.setHex(flashColor);
+
+                // Efecto flotante gigante de lo que te tocó
+                createFloatingText(window.innerWidth / 2, window.innerHeight / 2, `¡${petsInventory[petAwarded].name}!`, '#ffff00');
+
+                updateUI();
+                renderPetsList();
+            } else {
+                score -= eggCost;
+                
+                // Probabilidades estilo Roblox
+                let rand = Math.random() * 100;
+                let petAwarded = "";
+
+                if (rand < 6) petAwarded = "perro";
+                else if (rand < 1) petAwarded = "gato";
+                else petAwarded = "dragon";
+
+                petsInventory[petAwarded].count++;
+                
+                // Cambiar el color de la gema dinámicamente según la rareza obtenida
+                let flashColor = petAwarded === 'dragon' ? 0xffaa00 : (petAwarded === 'gato' ? 0xff00ff : 0x00ff00);
+                gem.material.color.setHex(flashColor);
+
+                // Efecto flotante gigante de lo que te tocó
+                createFloatingText(window.innerWidth / 2, window.innerHeight / 2, `¡${petsInventory[petAwarded].name}!`, '#ffff00');
+
+                updateUI();
+                renderPetsList();
+            }
+        }
+
+        function renderPetsList() {
+            const container = document.getElementById('pets-list');
+            container.innerHTML = "";
+            for (let key in petsInventory) {
+                if (petsInventory[key].count > 0) {
+                    container.innerHTML += `
+                        <div class="card-item" style="border-color:#3a0066">
+                            <div class="info-side">
+                                <span class="name-lbl">${petsInventory[key].name}</span>
+                                <span class="cost-lbl" style="color:#00ff00">Bono: +${petsInventory[key].mult * 100}% c/u</span>
+                            </div>
+                            <span class="count-lbl">x${petsInventory[key].count}</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // --- SISTEMA DE REBIRTHS ---
+        function triggerRebirth() {
+            let cost = getRebirthCost();
+            if (score >= cost) {
+                score = 0;
+                rebirths++;
+                
+                // Resetear estructuras compradas estilo Hard-Reset de Roblox
+                upgrades.click.count = 0;
+                upgrades.miner.count = 0;
+                upgrades.altar.count = 0;
+                upgrades.click.cost = upgrades.click.baseCost;
+                upgrades.miner.cost = upgrades.miner.baseCost;
+                upgrades.altar.cost = upgrades.altar.baseCost;
+                
+                baseCps = 0;
+                
+                // Súper destello en la cámara/pantalla
+                targetScale = 2.5;
+
+                updateUI();
+            } else {
+                score = 0;
+                rebirths++;
+                
+                // Resetear estructuras compradas estilo Hard-Reset de Roblox
+                upgrades.click.count = 0;
+                upgrades.miner.count = 0;
+                upgrades.altar.count = 0;
+                upgrades.click.cost = upgrades.click.baseCost;
+                upgrades.miner.cost = upgrades.miner.baseCost;
+                upgrades.altar.cost = upgrades.altar.baseCost;
+                
+                baseCps = 0;
+                
+                // Súper destello en la cámara/pantalla
+                targetScale = 2.5;
+
+                updateUI();
+            }
+        }
+        
+
+        // --- LOOP DE SEGUNDOS (CPS AUTOMÁTICO) ---
+        setInterval(() => {
+            let finalCps = baseCps * getTotalMultiplier();
+            if (finalCps > 0) {
+                score += finalCps;
+                updateUI();
+            }
+        }, 1);
+
+        // --- ACTUALIZACIÓN DE INTERFAZ ---
+        function updateUI() {
+            document.getElementById('score-display').innerText = Math.floor(score).toLocaleString();
+            document.getElementById('cps-display').innerText = `CPS Actual: ${Math.floor(baseCps * getTotalMultiplier()).toLocaleString()}`;
+            document.getElementById('rebirth-display').innerText = `Rebirths: ${rebirths} (x${getRebirthMultiplier()})`;
+            document.getElementById('rebirth-cost-lbl').innerText = `Costo: ${getRebirthCost().toLocaleString()} 💎`;
+            document.getElementById('pet-mult-lbl').innerText = `x${getPetMultiplier().toFixed(1)}`;
+
+            document.getElementById('cost-click').innerText = `Costo: ${upgrades.click.cost}`;
+            document.getElementById('count-click').innerText = upgrades.click.count;
+            document.getElementById('cost-miner').innerText = `Costo: ${upgrades.miner.cost}`;
+            document.getElementById('count-miner').innerText = upgrades.miner.count;
+            document.getElementById('cost-altar').innerText = `Costo: ${upgrades.altar.cost}`;
+            document.getElementById('count-altar').innerText = upgrades.altar.count;
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

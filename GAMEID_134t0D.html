@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Minecraft Old by:Suphes (Official)</title> 
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
+
+        #emergency-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; color: #333; padding: 50px;
+            font-family: 'Arial', sans-serif; z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .status-line {
+            position: fixed;
+            bottom: 0; width: 100%;
+            background: rgba(0,0,0,0.8); color: #00ff00;
+            font-family: monospace; font-size: 10px; padding: 3px 10px;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-line">SUPHES SYSTEM | PRECISION_BYPASS: ON | PRESIONA 'ESC' PARA MODO ESTUDIO</div>
+
+    <iframe id="portal" src="about:blank" allow="autoplay; gamepad; fullscreen"></iframe>
+
+    <div id="emergency-screen">
+        <h1 style="color: #4285f4; font-size: 2rem; margin-bottom: 20px;">Ensayo sobre la Identidad Digital</h1>
+        <p style="font-size: 1.1rem; line-height: 1.6;"><strong>Introducción:</strong> La identidad no reside en la apariencia, sino en la historia que llevamos grabada en el alma...</p>
+        <br>
+        <p style="font-size: 1.1rem; line-height: 1.6;">El uso de las tecnologías de la información ha transformado radicalmente la manera en que los estudiantes interactúan con su entorno educativo y personal. Es vital entender que la navegación digital forma un registro continuo en las plataformas modernas.</p>
+        <br>
+        <p><i>(Este es tu modo estudio. Presiona 'ESC' de nuevo para volver al juego).</i></p>
+    </div>
+
+    <script>
+        let isSafe = false;
+        const frame = document.getElementById('portal');
+        const emergency = document.getElementById('emergency-screen');
+
+        // TRUCO MÁGICO: Inyectamos el link por JS justo cuando la página se abre
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                frame.src = "https://happinessad.github.io/html/a3/";
+            }, 100); // 100 milisegundos de espera para despistar al navegador
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") {
+                isSafe = !isSafe;
+                if (isSafe) {
+                    emergency.style.display = 'block';
+                    frame.style.visibility = 'hidden'; 
+                } else {
+                    emergency.style.display = 'none';
+                    frame.style.visibility = 'visible';
+                    frame.focus();
+                }
+            }
+        });
+
+        console.log("Mini Evan: Precision Client activo. Un original roto es mejor que una copia perfecta.");
+    </script>
+</body>
+</html>
