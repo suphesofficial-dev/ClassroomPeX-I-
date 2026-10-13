@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassromPeX official</title>
+    <style>
+        /* --- ESTILOS GENERALES Y ESPACIALES --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Fondo de estrellas */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/123163/stars.png') repeat;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* --- PANTALLA DE INICIO (MENU SUPER CHIDO) --- */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0b1d3a 0%, #020611 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.8s ease;
+        }
+
+        .space-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe, #0000fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+            margin-bottom: 50px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .btn-start {
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            background: transparent;
+            border: 2px solid #00f2fe;
+            border-radius: 50px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+            letter-spacing: 2px;
+        }
+
+        .btn-start:hover {
+            background: #00f2fe;
+            color: #000;
+            box-shadow: 0 0 35px rgba(0, 242, 254, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* --- ANIMACIÓN DE CARGA ESPACIAL (HIPERESPACIO) --- */
+        #loader-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #020611;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99;
+        }
+
+        /* Agujero negro / Portal de carga */
+        .vortex {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px dashed #00f2fe;
+            border-top-color: #7f00ff;
+            border-bottom-color: #ff007f;
+            animation: spin 1.5s linear infinite;
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.6), inset 0 0 40px rgba(127, 0, 255, 0.6);
+        }
+
+        .loader-text {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            color: #00f2fe;
+            text-shadow: 0 0 10px #00f2fe;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        /* --- INTERFAZ PRINCIPAL (POST-CARGA) --- */
+        #main-content {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        /* Barra Superior */
+        .navbar {
+            background: rgba(11, 20, 38, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid rgba(0, 242, 254, 0.3);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .nav-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .menu-toggle {
+            background: none;
+            border: 2px solid #00f2fe;
+            color: #00f2fe;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: #00f2fe;
+            color: #000;
+            box-shadow: 0 0 15px #00f2fe;
+        }
+
+        /* Contenedor Inferior (Menú Izquierdo + Contenido Principal) */
+        .app-body {
+            display: flex;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Menú Lateral Izquierdo */
+        .sidebar {
+            position: absolute;
+            left: -300px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: rgba(5, 10, 20, 0.95);
+            border-right: 2px solid rgba(0, 242, 254, 0.5);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.7);
+            transition: left 0.4s cubic-bezier(0.77, 0.2, 0.05, 1);
+            z-index: 10;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: #fff;
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: #00f2fe;
+            padding-left: 25px;
+        }
+
+        /* Sección de Texto Variable dentro del Menú */
+        .menu-text-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            border-left: 3px solid #7f00ff;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #ccc;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        /* Rejilla de Cajas Principales */
+        .main-grid {
+            flex: 1;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            overflow-y: auto;
+            justify-content: center;
+            align-content: start;
+        }
+
+        /* Las 10 Cajas Estilo Google Cósmico */
+        .google-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Colores temáticos de Google pero brillantes/neón */
+        .box-blue { border-bottom: 4px solid #4285F4; }
+        .box-red { border-bottom: 4px solid #EA4335; }
+        .box-yellow { border-bottom: 4px solid #FBBC05; }
+        .box-green { border-bottom: 4px solid #34A853; }
+
+        .google-box:hover {
+            transform: translateY(-8px) scale(1.02);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 25px rgba(0, 242, 254, 0.3);
+            border-color: rgba(0, 242, 254, 0.6);
+        }
+
+        .google-box span {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 10px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <div id="welcome-screen">
+        <h1 class="space-title">ClassromPeX</h1>
+        <button class="btn-start" onclick="startLoading()">START</button>
+    </div>
+
+    <div id="loader-screen">
+        <div class="vortex"></div>
+        <div class="loader-text">CARGANDO CONTENIDO Y JS...</div>
+    </div>
+
+    <div id="main-content">
+        <header class="navbar">
+            <div class="nav-title">ClassromPeX GOLD</div>
+            <button class="menu-toggle" onclick="toggleMenu()">🛸 MENÚ</button>
+        </header>
+
+        <div class="app-body">
+            <nav class="sidebar" id="sidebar">
+                <button class="sidebar-btn" onclick="showText('home')">🏠 Home</button>
+                <button class="sidebar-btn" onclick="showText('creditos')">🎬 Créditos</button>
+                
+                <div class="menu-text-area" id="menu-text-content">
+                    Selecciona una opción de arriba para ver la información espacial.
+                </div>
+            </nav>
+
+            <main class="main-grid">
+                <a href="../GAMEID_0bs0.html" class="google-box box-blue">RobStorm<span>no funciona ha sido borrado por bugs D;</span></a>
+                <a href="../GAMEID_73loKI.html" class="google-box box-red">Krunker<span>GAMEID_73loKI</span></a>
+                <a href="../GAMEID_134t0D.html" class="google-box box-yellow">MC OLD<span>GAMEID_134t0D</span></a>
+                <a href="../GAMEID_304sP.html" class="google-box box-green">Evowars<span>GAMEID_304sP</span></a>
+                <a href="../GAMEID_B7zb33.html" class="google-box box-blue">Buzzy bee (NEW!)<span>GAMEID_B7zb33</span></a>
+                <a href="../GAMEID_F13s071.html" class="google-box box-red">FieldsOfFury (NEW!)<span>GAMEID_F13s071</span></a>
+                <a href="../GAMEID_s0wr04d.html" class="google-box box-yellow">SlowRoad (NEW!)<span>GAMEID_s0wr04d</span></a>
+                <a href="../GAMEID_SBA123.html" class="google-box box-green">SBA GOLD!!<span>GAMEID_SBA123</span></a>
+                <a href="../GAMEID_SM64010.html" class="google-box box-blue">SM64 GOLD!!<span>GAMEID_SM64010</span></a>
+                <a href="https://coming_soon.com" class="google-box box-red">WAIT THE NEW UPDATE!<span>COMING SOON</span></a>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Función para activar la animación de carga espacial
+        function startLoading() {
+            document.getElementById('welcome-screen').style.opacity = '0';
+            
+            setTimeout(() => {
+                document.getElementById('welcome-screen').style.display = 'none';
+                document.getElementById('loader-screen').style.display = 'flex';
+                
+                setTimeout(() => {
+                    document.getElementById('loader-screen').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'flex';
+                }, 3000);
+
+            }, 800); // Espera a que termine el fadeout del primer menú
+        }
+
+        // Función para abrir y cerrar el menú lateral
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Función para cambiar el texto dentro del menú lateral (Home / Créditos)
+        function showText(section) {
+            const textContainer = document.getElementById('menu-text-content');
+            
+            if(section === 'home') {
+                textContainer.innerHTML = `
+                    <h3>Bienvenido a Home</h3>
+                    <br>
+                    <p>Esta es la sección principal del sistema Suphlapher GOLD. Desde aquí puedes navegar por el juegos digitales usando los accesos rápidos de la derecha.</p>
+                                        <br>
+                    <p>//ALL RIGHTS RESERVED// FAVOR DE NO COPIAR NADA DE ESTE CONTENIDO SOLO CON PERMISO SINO SE LE HARA COMENTAR!!</p>
+                `;
+            } else if(section === 'creditos') {
+                textContainer.innerHTML = `
+                    <h3>Créditos del Proyecto</h3>
+                    <br>
+                    <p><strong>Desarrollador:</strong> SUPHES</p>
+                    <p><strong>Diseño:</strong> Interfaz Espacial Neón</p>
+                    <p><strong>Tecnología:</strong> HTML5, CSS3 Avanzado y JS Animaciones con juegos en HTML5 un poco de CSS y JS .</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

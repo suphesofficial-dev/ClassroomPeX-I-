@@ -1,2 +1,0 @@
-# ClassroomPeX-I-
-Classroom repository
